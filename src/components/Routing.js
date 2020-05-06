@@ -204,6 +204,7 @@ class Routing extends Component {
                                 <PrivateRoute
                                     component={DashboardDetailWithRouter}
                                 />
+                                <Route path='/torus-support' onEnter={() => window.location.reload()} />
                             </Switch>
                         )}
                         <Footer />

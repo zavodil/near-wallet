@@ -33,6 +33,7 @@ const CreateAccountForm = ({
     loader,
     formLoader,
     handleChange,
+    handleLoginWithGoogle,
     verifyRecaptcha,
     recaptchaFallback,
     requestStatus,
@@ -74,6 +75,9 @@ const CreateAccountForm = ({
         <div className='recover'>
             <div><Translate id='createAccount.alreadyHaveAnAccount' /></div>
             <Link to={process.env.DISABLE_PHONE_RECOVERY === 'yes' ? '/recover-seed-phrase' : '/recover-account'}><Translate id='createAccount.recoverItHere' /></Link>
+        </div>
+        <div>
+            <a href="#" onClick={(e) => { e.preventDefault(); handleLoginWithGoogle() }}>Login with Google</a>
         </div>
     </Container>
 )

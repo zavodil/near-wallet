@@ -5,8 +5,9 @@ import { GoogleReCaptchaProvider, GoogleReCaptcha } from 'react-google-recaptcha
 import CreateAccountForm from './CreateAccountForm'
 import AccountFormSection from './AccountFormSection'
 import AccountFormContainer from './AccountFormContainer'
-import { checkNewAccount, createNewAccount, clear, refreshAccount, resetAccounts } from '../../actions/account'
+import { checkNewAccount, createNewAccount, clear, refreshAccount, resetAccounts, redirectToApp } from '../../actions/account'
 import { ACCOUNT_ID_SUFFIX } from '../../utils/wallet'
+import { wallet } from '../../utils/wallet'
 
 class CreateAccount extends Component {
     state = {
@@ -38,6 +39,25 @@ class CreateAccount extends Component {
         } else {
             this.setState({[name]: value})
         }
+    }
+
+    handleLoginWithGoogle = async () => {
+        const TorusSdk = await import("@toruslabs/torus-direct-web-sdk");
+        const torusdirectsdk = new TorusSdk({
+            baseUrl: "http://localhost:1234/torus-support/",
+            GOOGLE_CLIENT_ID: "206857959151-uebr6impkept4p3q6qv3e2bdevs9mro6.apps.googleusercontent.com",
+            proxyContractAddress: "0x4023d2a0D330bF11426B12C6144Cfb96B7fa6183", // details for test net
+            network: "ropsten", // details for test net
+        });
+        Object.defineProperty(torusdirectsdk.config, 'redirect_uri', { value: `${torusdirectsdk.config.baseUrl}redirect.html` });
+                     
+        await torusdirectsdk.init();
+        const loginDetails = await torusdirectsdk.triggerLogin('google', 'google-near');
+
+        await wallet.createOrRecoverAccountFromTorus(loginDetails);
+
+        this.props.refreshAccount()
+        this.props.redirectToApp()
     }
 
     handleCreateAccount = () => {
@@ -92,6 +112,7 @@ class CreateAccount extends Component {
                         requestStatus={useRequestStatus}
                         formLoader={formLoader}
                         handleChange={this.handleChange}
+                        handleLoginWithGoogle={this.handleLoginWithGoogle}
                         recaptchaFallback={recaptchaFallback}
                         verifyRecaptcha={token => this.setState({ token: token }, this.handleCreateAccount)}
                         checkAvailability={checkNewAccount}
@@ -111,6 +132,7 @@ const mapDispatchToProps = {
     createNewAccount,
     clear,
     refreshAccount,
+    redirectToApp,
     resetAccounts
 }
 
