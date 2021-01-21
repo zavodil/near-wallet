@@ -19,17 +19,25 @@ class Sign extends Component {
 
     handleDeny = e => {
         e.preventDefault();
+        const { callbackUrl, meta } = this.props;
         // TODO: Dispatch action for app redirect?
         if (this.props.callbackUrl) {
-            window.location.href = this.props.callbackUrl;
+            window.location.href = addQueryParams(callbackUrl, { meta, errorCode: 'userRejected' })
         }
     }
 
     handleAllow = async () => {
         this.setState({ sending: true })
-        await this.props.signAndSendTransactions(this.props.transactions, this.props.account.accountId)
+        // TODO: Maybe this needs Redux reducer to propagate result into state?
+        const { transactions, account: { accountId }, callbackUrl, meta, dispatch } = this.props;
+
+        const transactionHashes = await dispatch(signAndSendTransactions(transactions, accountId))
+        console.log('transactionHashes', transactionHashes);
         if (this.props.callbackUrl) {
-            window.location.href = this.props.callbackUrl;
+            window.location.href = addQueryParams(callbackUrl, {
+                meta,
+                transactionHashes: transactionHashes.map(hash => hash.toString('base64'))
+            })
         }
     }
 
@@ -79,9 +87,12 @@ class Sign extends Component {
     }
 }
 
-const mapDispatchToProps = {
-    signAndSendTransactions,
-    push
+function addQueryParams(baseUrl, queryParams) {
+    const url = new URL(baseUrl);
+    for (let key in queryParams) {
+        url.searchParams.set(key, queryParams[key]);
+    }
+    return url.toString();
 }
 
 const mapStateToProps = ({ account, sign }) => ({
@@ -90,6 +101,5 @@ const mapStateToProps = ({ account, sign }) => ({
 })
 
 export const SignWithRouter = connect(
-    mapStateToProps,
-    mapDispatchToProps
+    mapStateToProps
 )(withRouter(Sign))
